@@ -2,120 +2,132 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Product Authenticity & Fraud Reporting</title>
+  <title>Product Authenticity & OTP Delivery Confirmation</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap">
   <script src="https://cdn.jsdelivr.net/npm/web3@1.7.4/dist/web3.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    body { background: #f8fbfd; font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 0;}
-    .container { max-width: 430px; margin: 40px auto 0 auto;
-      background: #fff; border-radius: 16px; box-shadow: 0 8px 40px #9fb0c31a;
-      padding: 32px 22px 28px 22px;}
+    body { background: #f8fbfd; font-family: 'Inter', Arial, sans-serif;}
+    .container { max-width: 460px; margin: 40px auto; padding: 32px 22px 28px 22px;
+      background: #fff; border-radius: 16px; box-shadow: 0 8px 40px #9fb0c31a;}
     h1 { color: #1862c5; font-size: 2rem; text-align: center; margin-bottom: 6px; font-weight: 600;}
-    .caption { text-align:center; color:#536178; margin-bottom:30px;}
+    .caption { text-align:center; color:#536178; margin-bottom:28px;}
     label { font-weight:600; color:#3d5170; margin-top:12px;}
-    input,button,select,textarea {
-      margin-top:7px; margin-bottom:14px;
-      font-size:1rem; padding:9px 12px;
-      border:1.3px solid #cadefd;
-      border-radius:6px; width:100%; background:#f7f9fd;
-      outline:none; box-sizing: border-box;
-      font-family: inherit; transition: border .2s;}
-    input:focus, textarea:focus { border-color:#448AFF; background: #eaf3ff;}
-    button {
-      background: linear-gradient(90deg,#2e6bdf 80%,#1567ca); color: #fff;
-      font-weight: 600; cursor: pointer; border:none;
-      margin-top:10px; letter-spacing:.5px; transition: background .15s;}
+    input,button,textarea { margin-top:7px; margin-bottom:14px;font-size:1rem;padding:9px 12px;
+      border:1.3px solid #cadefd; border-radius:6px; width:100%; background:#f7f9fd;}
+    input:focus, button:focus, textarea:focus { border-color:#448AFF; background: #eaf3ff;}
+    button { background: linear-gradient(90deg,#2e6bdf 80%,#1567ca); color: #fff;
+      font-weight: 600; cursor: pointer; border:none; transition: background .15s;}
     button:disabled { background: #aac7f6; cursor:not-allowed;}
-    textarea{ resize:vertical; min-height:48px; }
-    .statusMsg  {font-weight:500;margin-top:10px; padding:11px 15px; border-radius:6px; font-size:1rem; display:block;}
+    textarea{min-height:48px;}
+    .statusMsg {font-weight:500;margin-top:8px; padding:11px 15px; border-radius:6px; font-size:1rem;}
     .success {background: #e6fcf1; color:#00683a; border:1.2px solid #30dc97;}
     .error   {background: #ffe8e7; color:#d12023; border:1.2px solid #ff5858;}
-    #qr-reader {margin: 10px auto 16px auto; width:90%;max-width:265px;}
     hr {margin:30px 0 20px 0; border-color: #ebf1f9;}
-    .titleBar { display:flex; align-items:center; gap: 6px; margin-bottom:16px;}
-    .iconBox { background: linear-gradient(135deg,#38b6ff90,#0039a7bb 65%);
-      color: #fff; font-weight:700; width:34px;height:34px;
-      display:flex;align-items:center;justify-content:center; font-size:1.22rem;
-      border-radius:9px 2px 13px 2px;}
-    .section {margin-bottom:35px;}
+    .section {margin-bottom:30px;}
+    #qr-reader {margin: 10px auto 16px auto; width:92%;max-width:255px;}
     .flexrow { display:flex;gap:13px;}
-    .fraudLink {color:#dc4747; cursor:pointer; text-decoration:underline; font-size:.98rem;}
-    @media (max-width:500px){.container{padding:17px 4vw;}}
+    .fraudLink, .otpLink {
+      color:#dc4747; cursor:pointer; text-decoration:underline; font-size:.98rem;
+      display:inline-block;margin-top:-10px;}
+    #otpModal, #fraudModal {display:none; position:fixed; z-index:10; top:0; left:0; width:100vw;
+      height:100vh; background:#232941bb; justify-content:center; align-items:center;}
+    .modalbox {background:#fff;padding:26px 17px;max-width:342px; border-radius:13px;box-shadow:0 8px 48px #1d193155;}
+    .modalTitle {font-weight:600; color:#176bcc; margin-bottom:7px;}
+    .closeBtn {background:#ddeaff;color:#2656a8; font-size:.98rem;}
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Verify Product</h1>
-    <div class="caption">Secure your order—scan and verify. If cheated, complain instantly to the blockchain.</div>
-    <div id="walletBar" class="flexrow" style="margin-bottom:15px;">
+    <h1>Product Verification</h1>
+    <div class="caption">Register, verify, confirm OTP delivery, and report fraud — all in one place.</div>
+    <div class="flexrow" style="margin-bottom:17px;">
       <button id="connectBtn">🔗 Connect Wallet</button>
       <span id="walletAddress" style="color:#117422;align-self:center;white-space:nowrap;"></span>
     </div>
 
+    <!-- Admin registration -->
     <div class="section">
-      <div class="titleBar">
-        <span class="iconBox">📝</span>
-        <span style="font-size:1.12rem; font-weight:600; color:#176bcc">Admin: Register Product</span>
-      </div>
+      <b>Admin: Register Product</b>
       <form id="regForm">
-        <label for="pid">Product ID</label>
-        <input id="pid" type="text" required placeholder="e.g. ZX900221" />
-        <label for="pname">Product Name</label>
-        <input id="pname" type="text" required placeholder="e.g. Luxury Watch" />
-        <label for="manuf">Manufacturer</label>
-        <input id="manuf" type="text" required placeholder="e.g. Rolex SA" />
-        <label for="mfgdate">Manufacture Date</label>
+        <label>Product ID</label>
+        <input id="pid" type="text" required placeholder="e.g. ZX900221"/>
+        <label>Product Name</label>
+        <input id="pname" type="text" required placeholder="e.g. Smart Watch" />
+        <label>Manufacturer</label>
+        <input id="manuf" type="text" required placeholder="e.g. Acme Inc." />
+        <label>Manufacture Date</label>
         <input type="date" id="mfgdate" required />
         <button type="submit">Register Product</button>
       </form>
-      <div style="display:none" id="regResult" class="statusMsg"></div>
+      <div id="regResult" class="statusMsg" style="display:none"></div>
     </div>
-
     <hr />
 
+    <!-- Product Verification & OTP Actions -->
     <div class="section">
-      <div class="titleBar">
-        <span class="iconBox">🔍</span>
-        <span style="font-size:1.12rem; font-weight:600; color:#176bcc">Scan & Verify Product</span>
-      </div>
+      <b>Scan & Verify Product</b>
       <div id="qr-reader"></div>
-      <input type="text" id="vpid" placeholder="Paste or scan Product ID" autocomplete="off"/>
+      <input id="vpid" type="text" placeholder="Paste or scan Product ID" autocomplete="off"/>
       <button id="verifyBtn" disabled>Verify Product</button>
-      <div style="display:none" id="verifyResult" class="statusMsg"></div>
-      <div style="margin-top:7px;">
-        <span class="fraudLink" id="fraudTrigger">❗Report Fraudulent/Wrong Product Delivery</span>
+      <div id="verifyResult" class="statusMsg" style="display:none"></div>
+      <div>
+        <span class="otpLink" id="startOtp">🔑 Confirm Delivery by OTP</span>
+        <span class="fraudLink" id="fraudTrigger" style="float:right;">❗Report Fraud</span>
       </div>
     </div>
-
-    <!-- Fraud Report Modal -->
-    <div id="fraudModal" style="display:none;position:fixed;z-index:10;top:0;left:0;width:100vw;height:100vh;background:#232941dd;justify-content:center;align-items:center;">
-      <div style="background:#fff;padding:25px 20px;max-width:360px;border-radius:13px;box-shadow:0 8px 48px #1d193155;">
-        <div style="font-size:1.13rem;font-weight:600;color:#af383a;margin-bottom:10px;">Report a Delivery Fraud</div>
-        <label>Your Product ID</label>
-        <input type="text" id="fraud_pid" readonly />
-        <label style="margin-top:8px;">What went wrong?</label>
-        <textarea id="fraud_details" placeholder="Describe the issue (e.g. Received wrong/fake product, empty box...)"></textarea>
-        <div class="flexrow" style="margin-top:9px;">
-          <button style="background:#e46e68;" id="sendFraud">Send Report</button>
-          <button style="background:#c5dfff; color:#214baa;" id="closeFraud">Cancel</button>
-        </div>
-        <div id="fraudStatus" class="statusMsg" style="margin-top:9px;display:none"></div>
-      </div>
-    </div>
-
   </div>
+
+  <!-- OTP Confirmation Modal -->
+  <div id="otpModal">
+    <div class="modalbox">
+      <div class="modalTitle">Delivery OTP Confirmation</div>
+      <div id="otpStepAssign" style="display:none;">
+        <label>Recipient Address:</label>
+        <input type="text" id="otp_recipient" placeholder="0x..." />
+        <button id="assignOtpBtn">Assign OTP</button>
+        <div class="statusMsg" id="assignOtpMsg" style="display:none"></div>
+      </div>
+      <div id="otpStepShow" style="display:none;">
+        <label>Generated OTP (share with buyer):</label>
+        <input type="text" id="otp_code" readonly />
+        <button class="closeBtn" id="closeOtp">Close</button>
+      </div>
+      <div id="otpStepConfirm" style="display:none;">
+        <label>Enter OTP to confirm delivery:</label>
+        <input type="text" id="otp_input" placeholder="OTP from SMS..." maxlength="8"/>
+        <button id="confirmDeliveryBtn">Submit OTP</button>
+        <div class="statusMsg" id="confirmOtpMsg" style="display:none"></div>
+        <button class="closeBtn" id="closeOtp2">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fraud Report Modal -->
+  <div id="fraudModal">
+    <div class="modalbox">
+      <div class="modalTitle" style="color:#dc4747;">Report a Delivery Fraud</div>
+      <label>Your Product ID</label>
+      <input type="text" id="fraud_pid" readonly />
+      <label>What went wrong?</label>
+      <textarea id="fraud_details" placeholder="Describe the issue"></textarea>
+      <div class="flexrow" style="margin-top:9px;">
+        <button style="background:#e46e68;" id="sendFraud">Send Report</button>
+        <button class="closeBtn" id="closeFraud">Cancel</button>
+      </div>
+      <div id="fraudStatus" class="statusMsg" style="margin-top:9px;display:none"></div>
+    </div>
+  </div>
+
   <script>
-    // -------- CONTRACT ABI and ADDRESS (set your own deployed address) ---------
+    // CONTRACT ABI and ADDRESS
     const contractABI = [
       {
-        "inputs":[
-          {"internalType":"string","name":"productId","type":"string"},
-          {"internalType":"string","name":"productName","type":"string"},
-          {"internalType":"string","name":"manufacturer","type":"string"},
-          {"internalType":"uint256","name":"mfgDate","type":"uint256"}
-        ],
+        "inputs":[{"internalType":"string","name":"productId","type":"string"},
+                  {"internalType":"string","name":"productName","type":"string"},
+                  {"internalType":"string","name":"manufacturer","type":"string"},
+                  {"internalType":"uint256","name":"mfgDate","type":"uint256"}],
         "name":"registerProduct", "outputs":[], "stateMutability":"nonpayable", "type":"function"
       },
       {
@@ -124,138 +136,184 @@
           {"internalType":"bool","name":"exists","type":"bool"},
           {"internalType":"string","name":"name","type":"string"},
           {"internalType":"string","name":"manufacturer","type":"string"},
-          {"internalType":"uint256","name":"manufactureDate","type":"uint256"}
+          {"internalType":"uint256","name":"manufactureDate","type":"uint256"},
+          {"internalType":"bool","name":"delivered","type":"bool"},
+          {"internalType":"address","name":"recipient","type":"address"}
         ],
         "stateMutability":"view","type":"function"
       },
       {
-        "inputs":[
-          {"internalType":"string","name":"productId","type":"string"},
-          {"internalType":"string","name":"details","type":"string"}
-        ],
+        "inputs":[{"internalType":"string","name":"productId","type":"string"},
+                  {"internalType":"address","name":"recipient","type":"address"},
+                  {"internalType":"bytes32","name":"otpHash","type":"bytes32"}],
+        "name":"generateDeliveryOtp", "outputs":[], "stateMutability":"nonpayable", "type":"function"
+      },
+      {
+        "inputs":[{"internalType":"string","name":"productId","type":"string"},
+                  {"internalType":"string","name":"otp","type":"string"}],
+        "name":"confirmDelivery", "outputs":[], "stateMutability":"nonpayable", "type":"function"
+      },
+      {
+        "inputs":[{"internalType":"string","name":"productId","type":"string"},
+                  {"internalType":"string","name":"details","type":"string"}],
         "name":"reportFraud", "outputs":[], "stateMutability":"nonpayable", "type":"function"
       }
     ];
-    const contractAddress = "YOUR_DEPLOYED_CONTRACT_ADDRESS"; // <-- Set after deployment
+    const contractAddress = "YOUR_DEPLOYED_CONTRACT_ADDRESS"; // <-- Set after deploying above contract!
 
     let web3, contract, userAccount;
 
     document.getElementById('connectBtn').onclick = async function () {
       if (window.ethereum) {
         web3 = new Web3(window.ethereum);
-        try {
-          await ethereum.request({ method: 'eth_requestAccounts' });
-          const accounts = await web3.eth.getAccounts();
-          userAccount = accounts[0];
-          document.getElementById("walletAddress").textContent = userAccount.slice(0,6) + "..." + userAccount.slice(-4);
-          contract = new web3.eth.Contract(contractABI, contractAddress);
-          document.getElementById('verifyBtn').disabled = false;
-        } catch (err) {
-          alert("Wallet connection denied.");
-        }
-      } else {
-        alert("Please install MetaMask extension!");
+        await ethereum.request({ method: 'eth_requestAccounts' });
+        const accounts = await web3.eth.getAccounts();
+        userAccount = accounts[0];
+        document.getElementById("walletAddress").textContent = userAccount.slice(0,6) + "..." + userAccount.slice(-4);
+        contract = new web3.eth.Contract(contractABI, contractAddress);
+        document.getElementById('verifyBtn').disabled = false;
       }
     };
 
-    document.getElementById('regForm').onsubmit = async function(e){
+    document.getElementById('regForm').onsubmit = async e => {
       e.preventDefault();
       if (!contract || !userAccount) return alert("Connect wallet!");
       const pid = document.getElementById('pid').value.trim();
       const pname = document.getElementById('pname').value.trim();
       const manuf = document.getElementById('manuf').value.trim();
-      const mfgDateStr = document.getElementById('mfgdate').value;
-      const regDiv = document.getElementById('regResult');
-      regDiv.style.display = 'block';
-      regDiv.className = "statusMsg";
-      if (!mfgDateStr) return regDiv.textContent = "Enter manufacture date!";
-      const mfgDate = Math.floor(new Date(mfgDateStr).getTime() / 1000);
+      const mfgDate = Math.floor(new Date(document.getElementById('mfgdate').value).getTime()/1000);
+      const div = document.getElementById('regResult');
+      div.style.display='block';
       try {
         await contract.methods.registerProduct(pid, pname, manuf, mfgDate).send({from: userAccount});
-        regDiv.textContent = "✅ Product registered successfully!";
-        regDiv.classList.add("success");
-        regDiv.classList.remove("error");
+        div.textContent = "✅ Product registered!";
+        div.className = "statusMsg success";
         e.target.reset();
-      } catch (e) {
-        regDiv.textContent = "❌ Registration failed. Only contract owner can register.";
-        regDiv.classList.add("error");
-        regDiv.classList.remove("success");
+      } catch (error) {
+        div.textContent = "❌ Registration failed. (owner only)";
+        div.className = "statusMsg error";
       }
     };
 
-    // --- QR code scanner ---
+    // ----- QR Code Scanner -----
     const scanner = new Html5Qrcode("qr-reader");
     Html5Qrcode.getCameras().then(devs => {
-      if (devs && devs.length) {
+      if (devs && devs.length)
         scanner.start(
-          { deviceId: {exact: devs[0].id} },
-          { fps: 10, qrbox: 220 },
+          { deviceId: {exact: devs[0].id} }, { fps: 10, qrbox: 202 },
           decodedText => { document.getElementById('vpid').value = decodedText; },
           err => {}
-        ).catch(() => {
-          document.getElementById('verifyResult').style.display='block';
-          document.getElementById('verifyResult').textContent='❌ Could not open camera.';
-          document.getElementById('verifyResult').className='statusMsg error';
-        });
-      }
+        );
     });
 
-    document.getElementById('verifyBtn').onclick = async function(){
-      if(!contract){alert("Connect wallet first."); return;}
+    // -------- Product Verification ---------
+    document.getElementById('verifyBtn').onclick = async () => {
       const pid = document.getElementById('vpid').value.trim();
-      const resultDiv = document.getElementById('verifyResult');
-      resultDiv.style.display='block';
-      resultDiv.className="statusMsg";
-      if(!pid){resultDiv.textContent="❌ Enter or scan a Product ID.";resultDiv.classList.add("error");return;}
+      const div = document.getElementById('verifyResult');
+      div.style.display='block';
+      div.className = "statusMsg";
+      if(!pid){div.textContent="❌ Enter/scan Product ID!";div.classList.add("error");return;}
       try {
         const res = await contract.methods.verifyProduct(pid).call();
         if(res[0]){
           const date = new Date(res[3]*1000);
-          resultDiv.innerHTML = `
-            ✅ <b>Product is Authentic</b><br>
-            Name: <b>${res[1]}</b><br>
-            Manufacturer: <b>${res[2]}</b><br>
-            Manufacture Date: <b>${date.toLocaleDateString()}</b>
-          `;
-          resultDiv.classList.add("success");
-          resultDiv.classList.remove("error");
+          let status = res[4] ? "✅ Delivered" : "⏳ Not Delivered";
+          div.innerHTML = `✅ <b>Product Found</b><br>Name: <b>${res[1]}</b><br>Manufacturer: <b>${res[2]}</b><br>Manufacture Date: <b>${date.toLocaleDateString()}</b><br>Delivery Status: <b>${status}</b>`;
+          div.classList.add("success");
         }else{
-          resultDiv.textContent = "❌ Product not found on blockchain (may be fake). You may raise a fraud report.";
-          resultDiv.classList.add("error");
-          resultDiv.classList.remove("success");
+          div.textContent = "❌ Product not found (may be fake or not registered)!";
+          div.classList.add("error");
         }
-      }catch(e){
-        resultDiv.textContent = "❌ Error verifying product.";
-        resultDiv.classList.add("error");
-        resultDiv.classList.remove("success");
+      } catch(err){
+        div.textContent = "❌ Error verifying product.";
+        div.classList.add("error");
       }
     };
 
-    // FRAUD REPORT WORKFLOW
+    // ------------------ OTP DELIVERY CONFIRMATION (Modal Interaction) ------------------
+
+    // Open OTP Modal
+    document.getElementById('startOtp').onclick = function() {
+      document.getElementById('otpModal').style.display='flex';
+      if(userAccount){ document.getElementById('otp_recipient').value = userAccount; }
+      document.getElementById('otpStepAssign').style.display = 'block';
+      document.getElementById('otpStepShow').style.display = 'none';
+      document.getElementById('otpStepConfirm').style.display = 'none';
+      document.getElementById('assignOtpMsg').style.display='none';
+      document.getElementById('confirmOtpMsg').style.display='none';
+    };
+    document.getElementById('closeOtp').onclick = document.getElementById('closeOtp2').onclick = function() {
+      document.getElementById('otpModal').style.display='none';
+    };
+
+    // Assign OTP (Admin action: generate + show OTP to delivery)
+    document.getElementById('assignOtpBtn').onclick = async function(){
+      const pid = document.getElementById('vpid').value.trim();
+      const recipient = document.getElementById('otp_recipient').value.trim();
+      const msgDiv = document.getElementById('assignOtpMsg'); msgDiv.style.display='block';
+      if(!pid || !recipient){msgDiv.textContent = "Enter Product ID and recipient!";msgDiv.className="statusMsg error";return;}
+      // Generate a random 6-digit OTP string
+      const otp = String(Math.floor(100000 + Math.random() * 900000));
+      const otpHash = web3.utils.keccak256(otp);
+      try{
+        await contract.methods.generateDeliveryOtp(pid, recipient, otpHash).send({from:userAccount});
+        document.getElementById('otpStepAssign').style.display = 'none';
+        document.getElementById('otpStepShow').style.display = 'block';
+        document.getElementById('otp_code').value = otp;
+      }catch(e){
+        msgDiv.textContent = "❌ Only admin can assign OTP, or delivery already confirmed!";
+        msgDiv.className="statusMsg error";
+      }
+    };
+
+    // Buyer confirms delivery with OTP
+    document.getElementById('otpStepShow').ondblclick = () => {
+      // (hidden for UX)
+      document.getElementById('otpModal').style.display='none';
+    };
+    document.getElementById('otpStepShow').onclick = function(){
+      // Switch to confirm mode
+      document.getElementById('otpStepShow').style.display = 'none';
+      document.getElementById('otpStepConfirm').style.display = 'block';
+      document.getElementById('otp_input').value = '';
+      document.getElementById('confirmOtpMsg').style.display='none';
+    };
+    document.getElementById('confirmDeliveryBtn').onclick = async function(){
+      const pid = document.getElementById('vpid').value.trim();
+      const otp = document.getElementById('otp_input').value.trim();
+      const div = document.getElementById('confirmOtpMsg'); div.style.display='block';
+      if(!pid || !otp){div.textContent="Enter Product ID and OTP";div.className="statusMsg error";return;}
+      try { 
+        await contract.methods.confirmDelivery(pid, otp).send({from:userAccount});
+        div.textContent = "✅ Delivery confirmed and stored on blockchain!";
+        div.className = "statusMsg success";
+      } catch(e){
+        div.textContent = "❌ Invalid OTP or not the recipient, or already confirmed.";
+        div.className = "statusMsg error";
+      }
+    };
+
+    // ------------------ Fraud Report Workflow ------------------
     document.getElementById('fraudTrigger').onclick = function(){
       document.getElementById('fraudModal').style.display='flex';
       document.getElementById('fraud_pid').value = document.getElementById('vpid').value.trim();
       document.getElementById('fraud_details').value = '';
       document.getElementById('fraudStatus').style.display='none';
     };
-    document.getElementById('closeFraud').onclick = function(){
-      document.getElementById('fraudModal').style.display='none';
-    };
+    document.getElementById('closeFraud').onclick = function(){document.getElementById('fraudModal').style.display='none';};
     document.getElementById('sendFraud').onclick = async function(){
       const pid = document.getElementById('fraud_pid').value.trim();
       const details = document.getElementById('fraud_details').value.trim();
       const stat = document.getElementById('fraudStatus');
-      stat.style.display='block'; stat.textContent="Sending...";
-      stat.className="statusMsg";
-      if(!pid) {stat.textContent="Enter Product ID!"; stat.classList.add('error');return;}
-      if(!details) {stat.textContent="Please describe your complaint."; stat.classList.add('error');return;}
+      stat.style.display='block';
+      if(!pid){stat.textContent="Enter Product ID!";stat.className='statusMsg error';return;}
+      if(!details){stat.textContent="Please describe your complaint.";stat.className='statusMsg error';return;}
       try{
         await contract.methods.reportFraud(pid, details).send({from:userAccount});
-        stat.textContent="✅ Fraud complaint sent. Your report is now on the blockchain.";
-        stat.classList.add('success');stat.classList.remove('error');
+        stat.textContent="✅ Your complaint is recorded on blockchain.";
+        stat.className='statusMsg success';
       }catch(e){
-        stat.textContent="❌ Failed to submit fraud report. Try again.";
-        stat.classList.add('error');stat.classList.remove('success');
+        stat.textContent="❌ Failed to submit fraud report. Try again.";stat.className='statusMsg error';
       }
     };
   </script>
