@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Verify Product Authenticity (Blockchain Demo)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.7.4/dist/web3.min.js"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: Segoe UI, sans-serif; background: #f8fafb; max-width: 400px; margin: 50px auto 0; padding: 16px;}
+    h2 { text-align: center; }
+    #walletAddress { display:block; margin:10px 0 20px 0; color: #12821e; font-weight:600; }
+    #qr-reader { margin: 10px auto 20px auto; width: 90%; }
+    #productId { width: 100%; padding: 10px; font-size: 1rem; border-radius: 5px; border: 1px solid #bbb;}
+    button { padding: 11px 0; width: 100%; font-size: 1rem; margin: 10px 0; border-radius:5px; border:none; background: #1877f2; color: white; font-weight: bold; cursor:pointer;}
+    #verifyBtn[disabled] { background: #bbb; cursor:default;}
+    #result { margin-top: 16px; font-weight: bold; border-radius: 6px; padding: 13px;}
+    .success { background: #e7fbe4; color: #237512; }
+    .error   { background: #fde4e8; color: #b83044;}
+  </style>
+</head>
+<body>
+  <h2>Check Product Authenticity</h2>
+  <button id="connectWalletBtn">🔗 Connect Wallet</button>
+  <div id="walletAddress"></div>
+  <div id="qr-reader"></div>
+  <input id="productId" type="text" placeholder="...or enter product ID manually" autocomplete="off"/>
+  <button id="verifyBtn" disabled>Verify Product</button>
+  <div id="result"></div>
+
+  <script>
+    // ---- Setup your contract below ----
+    // Use your actual contract ABI and address
+    const contractABI = [
+      {
+        "inputs": [{ "internalType": "string", "name": "productId", "type": "string" }],
+        "name": "verifyProduct",
+        "outputs": [
+          { "internalType": "bool", "name": "exists", "type": "bool" },
+          { "internalType": "string", "name": "name", "type": "string" },
+          { "internalType": "string", "name": "manufacturer", "type": "string" }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ];
+    const contractAddress = "YOUR_CONTRACT_ADDRESS_HERE"; // <-- set yours
+
+    let web3, contract, userAccount;
+
+    // Connect wallet
+    document.getElementById("connectWalletBtn").onclick = async function() {
+      if (window.ethereum) {
+        web3 = new Web3(window.ethereum);
+        try {
+            let accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+            userAccount = accounts[0];
+            contract = new web3.eth.Contract(contractABI, contractAddress);
+            document.getElementById("walletAddress").innerText = "Connected: " + userAccount;
+            document.getElementById("verifyBtn").disabled = false;
+        } catch (e) {
+            alert("Wallet connection denied");
+        }
+      } else {
+        alert("Please install MetaMask!");
+      }
+    };
+
+    // Setup QR Scanner
+    let scanner;
+    window.addEventListener("load", function() {
+      scanner = new Html5Qrcode("qr-reader");
+      Html5Qrcode.getCameras().then(devices => {
+        if (devices && devices.length) {
+          scanner.start(
+            { deviceId: { exact: devices[0].id } },
+            { fps: 10, qrbox: 220 },
+            decodedText => {
+              document.getElementById("productId").value = decodedText;
+            },
+            error => { /* ignore scan errors for UX */ }
+          );
+        } else {
+          document.getElementById("qr-reader").innerText = "❌ No camera found!";
+        }
+      });
+    });
+
+    // On verify click
+    document.getElementById("verifyBtn").onclick = async function() {
+      const resultDiv = document.getElementById("result");
+      resultDiv.className = "";
+      resultDiv.innerText = "";
+      const pid = document.getElementById("productId").value.trim();
+      if (!pid) {
+        resultDiv.innerText = "❌ Please enter or scan a Product ID.";
+        resultDiv.className = "error";
+        return;
+      }
+      if (!contract || !userAccount) {
+        resultDiv.innerText = "❌ Please connect your wallet first.";
+        resultDiv.className = "error";
+        return;
+      }
+      try {
+        resultDiv.innerText = "Verifying on blockchain…";
+        const res = await contract.methods.verifyProduct(pid).call({ from: userAccount });
+        if (res[0]) {
+          resultDiv.innerHTML = `✅ <strong>Product is Authentic</strong><br>Name: <b>${res[1]}</b><br>Manufacturer: <b>${res[2]}</b>`;
+          resultDiv.className = "success";
+        } else {
+          resultDiv.innerText = "❌ Product ID not found on blockchain (may be fake).";
+          resultDiv.className = "error";
+        }
+      } catch(e) {
+        resultDiv.innerText = "❌ Blockchain error or invalid contract.";
+        resultDiv.className = "error";
+      }
+    };
+  </script>
+</body>
+</html>
