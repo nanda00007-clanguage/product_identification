@@ -2,17 +2,65 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Fake Product Checker</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Blockchain Fake Product Checker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <script src="https://cdn.jsdelivr.net/npm/web3@1.7.4/dist/web3.min.js"></script>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    body { background: #f3f6fa; font-family: Arial,sans-serif; max-width: 600px; margin: 30px auto; padding: 20px; }
-    h1 { text-align: center; }
-    label, input, button { display: block; margin-top: 8px; width: 100%; }
-    #qr-reader { margin: 18px 0; }
-    .success { background: #e8ffe7; color: #12821e; padding: 11px; border-radius: 5px;}
-    .error { background: #ffefef; color: #ba273a; padding: 11px; border-radius: 5px;}
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 30px auto;
+      padding: 20px;
+      background: #f3f6fa;
+    }
+    h1 {
+      text-align: center;
+    }
+    label, input, button {
+      display: block;
+      margin-top: 8px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #1877f2;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:disabled {
+      background: #aaa;
+      cursor: not-allowed;
+    }
+    #qr-reader {
+      margin: 18px 0;
+      width: 100%;
+      max-width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .success {
+      background: #e8ffe7;
+      color: #12821e;
+      padding: 11px;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+    .error {
+      background: #ffefef;
+      color: #ba273a;
+      padding: 11px;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
@@ -23,114 +71,154 @@
   <h3>Register New Product (Admin Only)</h3>
   <form id="regForm">
     <label>Product ID</label>
-    <input type="text" id="pid" required>
+    <input type="text" id="pid" required />
     <label>Product Name</label>
-    <input type="text" id="pname" required>
+    <input type="text" id="pname" required />
     <label>Manufacturer</label>
-    <input type="text" id="manuf" required>
+    <input type="text" id="manuf" required />
     <label>Manufacture Date</label>
-    <input type="date" id="mfgdate" required>
+    <input type="date" id="mfgdate" required />
     <button type="submit">Register Product</button>
   </form>
   <div id="regResult"></div>
-  <hr>
+
+  <hr />
+
   <h3>Verify Product (Scan or Enter ID)</h3>
-  <div id="qr-reader" style="width:300px"></div>
-  <input type="text" id="vpid" placeholder="Product ID">
+  <div id="qr-reader"></div>
+  <input type="text" id="vpid" placeholder="Product ID" />
   <button id="verifyBtn" disabled>Verify</button>
   <div id="verifyResult"></div>
 
   <script>
-    // Contract ABI and address (replace with your values after deploying)
+    // Contract ABI and address - replace with your deployed contract values
     const contractABI = [
       {
-        "inputs": [
-          {"internalType": "string","name": "productId","type": "string"},
-          {"internalType": "string","name": "productName","type": "string"},
-          {"internalType": "string","name": "manufacturer","type": "string"},
-          {"internalType": "uint256","name": "mfgDate","type": "uint256"}
+        "inputs":[
+          {"internalType":"string","name":"productId","type":"string"},
+          {"internalType":"string","name":"productName","type":"string"},
+          {"internalType":"string","name":"manufacturer","type":"string"},
+          {"internalType":"uint256","name":"mfgDate","type":"uint256"}
         ],
-        "name": "registerProduct",
-        "outputs": [], "stateMutability": "nonpayable", "type": "function"
+        "name":"registerProduct",
+        "outputs":[],
+        "stateMutability":"nonpayable",
+        "type":"function"
       },
       {
-        "inputs": [{"internalType": "string","name": "productId","type": "string"}],
-        "name": "verifyProduct",
-        "outputs": [
-          {"internalType": "bool","name": "exists","type": "bool"},
-          {"internalType": "string","name": "name","type": "string"},
-          {"internalType": "string","name": "manufacturer","type": "string"},
-          {"internalType": "uint256","name": "manufactureDate","type": "uint256"}
+        "inputs":[{"internalType":"string","name":"productId","type":"string"}],
+        "name":"verifyProduct",
+        "outputs":[
+          {"internalType":"bool","name":"exists","type":"bool"},
+          {"internalType":"string","name":"name","type":"string"},
+          {"internalType":"string","name":"manufacturer","type":"string"},
+          {"internalType":"uint256","name":"manufactureDate","type":"uint256"}
         ],
-        "stateMutability": "view", "type": "function"
+        "stateMutability":"view",
+        "type":"function"
       }
     ];
-    const contractAddress = "YOUR_DEPLOYED_CONTRACT_ADDRESS"; // <--- Set this after deployment
+
+    const contractAddress = "YOUR_DEPLOYED_CONTRACT_ADDRESS"; // <-- Set this after deployment
 
     let web3, contract, userAccount;
-    document.getElementById('connectBtn').onclick = async function () {
+
+    document.getElementById('connectBtn').onclick = async () => {
       if (window.ethereum) {
-        web3 = new Web3(ethereum);
-        await ethereum.request({ method: 'eth_requestAccounts' });
-        let accounts = await web3.eth.getAccounts();
-        userAccount = accounts[0];
-        document.getElementById("walletAddress").textContent = "Connected: " + userAccount;
-        contract = new web3.eth.Contract(contractABI, contractAddress);
-        document.getElementById('verifyBtn').disabled = false;
+        web3 = new Web3(window.ethereum);
+        try {
+          await ethereum.request({ method: 'eth_requestAccounts' });
+          const accounts = await web3.eth.getAccounts();
+          userAccount = accounts[0];
+          document.getElementById("walletAddress").textContent = "Connected: " + userAccount;
+          contract = new web3.eth.Contract(contractABI, contractAddress);
+          document.getElementById('verifyBtn').disabled = false;
+        } catch (err) {
+          alert("Wallet connection denied.");
+        }
       } else {
-        alert("Install MetaMask extension!");
+        alert("Please install MetaMask extension!");
       }
     };
 
-    document.getElementById('regForm').onsubmit = async function (e) {
+    document.getElementById('regForm').onsubmit = async (e) => {
       e.preventDefault();
-      if (!contract || !userAccount) return alert("Connect wallet first");
-      let pid = document.getElementById('pid').value.trim();
-      let pname = document.getElementById('pname').value.trim();
-      let manuf = document.getElementById('manuf').value.trim();
-      let mfgdate = new Date(document.getElementById('mfgdate').value).getTime()/1000|0;
-      let div = document.getElementById('regResult');
+      if (!contract || !userAccount) return alert("Connect wallet first.");
+      const pid = document.getElementById('pid').value.trim();
+      const pname = document.getElementById('pname').value.trim();
+      const manuf = document.getElementById('manuf').value.trim();
+      const mfgDateStr = document.getElementById('mfgdate').value;
+      if (!mfgDateStr) return alert("Please enter manufacture date.");
+      const mfgDate = Math.floor(new Date(mfgDateStr).getTime() / 1000);
+
+      const div = document.getElementById('regResult');
+      div.textContent = '';
+      div.className = '';
+
       try {
-        await contract.methods.registerProduct(pid, pname, manuf, mfgdate)
-          .send({from: userAccount});
-        div.textContent = "✅ Product registered!"; div.className = "success";
-        this.reset();
-      } catch(e) {
-        div.textContent = "❌ Registration failed (maybe not owner?)"; div.className = "error";
+        await contract.methods.registerProduct(pid, pname, manuf, mfgDate).send({ from: userAccount });
+        div.textContent = "✅ Product registered successfully!";
+        div.className = "success";
+        e.target.reset();
+      } catch (error) {
+        div.textContent = "❌ Registration failed. Only contract owner can register products.";
+        div.className = "error";
       }
     };
 
-    // QR code scanner
-    let scanner = new Html5Qrcode("qr-reader");
-    Html5Qrcode.getCameras().then(devs => {
-      if (devs && devs.length) {
+    // Initialize QR code scanner
+    const scanner = new Html5Qrcode("qr-reader");
+
+    Html5Qrcode.getCameras().then(devices => {
+      if (devices && devices.length) {
         scanner.start(
-          { deviceId: { exact: devs[0].id } },
-          { fps: 10, qrbox: 180 },
+          { deviceId: { exact: devices[0].id } },
+          { fps: 10, qrbox: 250 },
           decodedText => {
-            document.getElementById("vpid").value = decodedText;
+            document.getElementById('vpid').value = decodedText;
           },
-          err => {});
+          errorMessage => {
+            // Ignore scan errors for better UX
+          }
+        ).catch(err => {
+          document.getElementById('verifyResult').textContent = "❌ Unable to start camera or QR scanner.";
+          document.getElementById('verifyResult').className = "error";
+        });
+      } else {
+        document.getElementById('verifyResult').textContent = "❌ No camera found!";
+        document.getElementById('verifyResult').className = "error";
       }
     });
 
-    document.getElementById('verifyBtn').onclick = async function () {
-      if (!contract) return alert("Connect wallet");
-      let pid = document.getElementById('vpid').value.trim();
-      let div = document.getElementById('verifyResult');
-      div.textContent = ""; div.className = "";
-      if (!pid) return;
+    document.getElementById('verifyBtn').onclick = async () => {
+      if (!contract) return alert("Connect wallet first.");
+      const pid = document.getElementById('vpid').value.trim();
+      const div = document.getElementById('verifyResult');
+      div.textContent = '';
+      div.className = '';
+
+      if (!pid) {
+        div.textContent = "❌ Please enter or scan a Product ID.";
+        div.className = "error";
+        return;
+      }
+
       try {
-        let res = await contract.methods.verifyProduct(pid).call();
+        const res = await contract.methods.verifyProduct(pid).call();
         if (res[0]) {
-          let d = new Date(res[3] * 1000);
-          div.innerHTML = `✅ <b>Product Authentic</b><br>Name: ${res[1]}<br>Manufacturer: ${res[2]}<br>Manufacture Date: ${d.toLocaleDateString()}`;
+          const date = new Date(res[3] * 1000);
+          div.innerHTML = `✅ <strong>Product is Authentic</strong><br>
+                          Name: <b>${res[1]}</b><br>
+                          Manufacturer: <b>${res[2]}</b><br>
+                          Manufacture Date: <b>${date.toLocaleDateString()}</b>`;
           div.className = "success";
         } else {
-          div.textContent = "❌ Product ID not found (may be fake)"; div.className = "error";
+          div.textContent = "❌ Product not found on blockchain (may be fake).";
+          div.className = "error";
         }
-      } catch(e) {
-        div.textContent = "❌ Blockchain call failed"; div.className = "error";
+      } catch (err) {
+        div.textContent = "❌ Error verifying product on blockchain.";
+        div.className = "error";
       }
     };
   </script>
