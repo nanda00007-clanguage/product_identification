@@ -2,275 +2,447 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Secure Product Registry Demo</title>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&display=swap" rel="stylesheet"/>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Blockchain Product Registry - Secure</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet" />
+<!-- Web3 & QR Code Libraries -->
 <script src="https://cdn.jsdelivr.net/npm/web3@1.7.4/dist/web3.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
 <style>
-body {
-  background: linear-gradient(135deg,#e3ecfb 0%,#d5e7e0 100%);
-  font-family: 'Montserrat', Arial, sans-serif;
-  margin:0; min-height:100vh;
-}
-.mainbox {
-  max-width: 430px;
-  margin: 44px auto 0 auto;
-  background: white;
-  border-radius: 18px;
-  box-shadow: 0 8px 40px #b6c1de33;
-  padding: 32px 26px 32px 26px;
-}
-h1 {
-  font-weight:800;
-  font-size:2.1rem;
-  margin:0 0 10px 0;
-  color:#1a50b4;
-  letter-spacing:1px;
-  text-align:center;
-}
-.step {
-  margin-top: 20px;
-  padding: 19px 10px 11px 10px;
-  border-radius: 14px;
-  background: #f9fafb;
-  box-shadow: 0 2px 10px #f8f7f7;
-}
-label { margin:14px 0 3px 3px; font-weight:600;}
-input, button, textarea {
-  width:100%;font-size:1.04rem; padding:10px 14px; margin:7px 0 13px 0;
-  border-radius:7px; border:1.2px solid #cbdbef;
-  background:#f6f8fc; font-family:inherit; box-sizing:border-box;
-  transition:.16s border;
-}
-input:focus, textarea:focus { border-color:#2475f5;background:#eaf1fe;}
-button { background:linear-gradient(91deg,#2061e2 70%,#1c5fab); color:white; border:none; cursor:pointer; font-weight:800;}
-button:disabled {background:#a8c3e6;}
-.success { color:#097700; background:#e3fae6; border:1.2px solid #38da57; }
-.error { color:#d6342c; background:#fcf0f1; border:1.2px solid #ef6c60;}
-.status { padding: 10px; border-radius:7px; margin:-7px 0 8px 0; font-weight:600;}
-.hide { display:none!important; }
-hr {margin:29px 0;}
-#qr-reader { margin:0 auto 11px auto; width:100%; max-width:285px; border-radius:16px; border:1.5px solid #e5ebfa;}
-.flex { display:flex; gap:10px; align-items:center;}
-@media (max-width:500px) {.mainbox{padding:9px 2vw;}}
+  body {
+    margin: 0; padding: 0; min-height: 100vh;
+    background-color: #eff2f8;
+    font-family: 'Montserrat', sans-serif;
+    display: flex; justify-content: center; align-items: flex-start;
+    padding: 40px 15px;
+  }
+  .container {
+    max-width: 460px;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 18px rgb(86 112 237 / 15%);
+    padding: 32px 28px;
+  }
+  h1 {
+    font-weight: 600;
+    font-size: 2rem;
+    color: #1e2f6c;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  label {
+    font-weight: 600;
+    display: block;
+    margin-top: 18px;
+    color: #4a5568;
+  }
+  input, textarea, button {
+    width: 100%;
+    padding: 10px 12px;
+    margin-top: 8px;
+    display: block;
+    font-size: 1rem;
+    border-radius: 8px;
+    border: 1.5px solid #cbd5e0;
+    box-sizing: border-box;
+    outline-offset: 3px;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus, textarea:focus {
+    border-color: #5a6fcf;
+    box-shadow: 0 0 6px #7c8dfdaa;
+  }
+  textarea {
+    min-height: 64px;
+    resize: vertical;
+  }
+  button {
+    background: linear-gradient(90deg, #4353f5 90%, #0d2edc 100%);
+    color: white;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    margin-top: 20px;
+    user-select: none;
+  }
+  button:disabled {
+    background: #9cadf3;
+    cursor: not-allowed;
+  }
+  .hidden {
+    display: none !important;
+  }
+  #qr-reader {
+    width: 100%;
+    max-width: 270px;
+    margin: 18px auto 14px;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .status-message {
+    border-radius: 7px;
+    padding: 12px 14px;
+    margin-top: 12px;
+    font-weight: 600;
+  }
+  .status-success {
+    background-color: #daf8dc;
+    color: #246425;
+    border: 1.6px solid #3ca063;
+  }
+  .status-error {
+    background-color: #ffd4d1;
+    color: #91261a;
+    border: 1.6px solid #d65144;
+  }
+  .actions-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .text-link {
+    color: #3b61ff;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 0.9rem;
+    user-select: none;
+  }
 </style>
 </head>
 <body>
-<div class="mainbox">
-  <h1>Product Registry</h1>
+  <main class="container" role="main" aria-label="Blockchain Product Registry App">
 
-  <!-- Step 1: Login -->
-  <div class="step" id="loginStep">
-    <label>Username</label>
-    <input id="loginUser" autocomplete="username"/>
-    <label>Password</label>
-    <input id="loginPwd" type="password" autocomplete="current-password"/>
-    <button id="loginBtn">Login</button>
-    <div id="loginMsg" class="status hide"></div>
-  </div>
+    <!-- Login -->
+    <section id="login-section" aria-live="polite" aria-labelledby="login-title">
+      <h1 id="login-title">User Login</h1>
+      <label for="login-username">Username</label>
+      <input id="login-username" type="text" autocomplete="username" placeholder="Enter username" />
+      <label for="login-password">Password</label>
+      <input id="login-password" type="password" autocomplete="current-password" placeholder="Enter password" />
+      <button id="login-btn">Login</button>
+      <div id="login-message" class="status-message hidden"></div>
+    </section>
 
-  <!-- Step 2: Wallet -->
-  <div class="step hide" id="walletStep">
-    <button id="connectBtn">🔗 Connect MetaMask Wallet</button>
-    <span id="walletDisp" style="margin-left:7px; color:#1b795b; font-weight:600;"></span>
-    <div id="walletMsg" class="status hide"></div>
-  </div>
+    <!-- Wallet Connect -->
+    <section id="wallet-section" class="hidden" aria-live="polite" aria-labelledby="wallet-title">
+      <h1 id="wallet-title">Connect Wallet</h1>
+      <button id="wallet-connect-btn">Connect MetaMask Wallet</button>
+      <p id="wallet-address" style="margin-top: 12px; font-weight: 600; color: #3a811e;"></p>
+      <div id="wallet-message" class="status-message hidden"></div>
+    </section>
 
-  <!-- Step 3: OTP for product registration -->
-  <div class="step hide" id="otpStep">
-    <label>Registration OTP (get from admin)</label>
-    <input id="userOtp"/>
-    <button id="otpBtn" disabled>Verify OTP → unlock registration</button>
-    <div id="otpMsg" class="status hide"></div>
-  </div>
+    <!-- OTP Verification -->
+    <section id="otp-section" class="hidden" aria-live="polite" aria-labelledby="otp-title">
+      <h1 id="otp-title">OTP Verification</h1>
+      <label for="otp-input">Enter Registration OTP</label>
+      <input id="otp-input" type="text" autocomplete="off" placeholder="Enter OTP provided by Admin" />
+      <button id="otp-verify-btn" disabled>Verify OTP</button>
+      <div id="otp-message" class="status-message hidden"></div>
+    </section>
 
-  <!-- Step 4: Product Registration (after OTP) -->
-  <div class="step hide" id="regStep">
-    <form id="registerForm" autocomplete="off">
-      <h3 style="margin:0 0 4px 0;font-size:1.15rem;font-weight:800;color:#2c4977">Register Product</h3>
-      <label>Product ID</label><input id="pid" required />
-      <label>Name</label><input id="pname" required />
-      <label>Manufacturer</label><input id="manuf" required />
-      <label>Manufacture Date</label><input id="mfgdate" type="date" required />
-      <button type="submit">Register</button>
-    </form>
-    <div id="regMsg" class="status hide"></div>
-  </div>
+    <!-- Product Registration -->
+    <section id="registration-section" class="hidden" aria-live="polite" aria-labelledby="register-title">
+      <h1 id="register-title">Register Product</h1>
+      <form id="register-form" autocomplete="off">
+        <label for="product-id">Product ID</label>
+        <input id="product-id" required aria-describedby="product-id-desc" placeholder="Unique product identifier" />
+        <label for="product-name">Product Name</label>
+        <input id="product-name" required placeholder="Name of the product" />
+        <label for="product-manufacturer">Manufacturer</label>
+        <input id="product-manufacturer" required placeholder="Manufacturer's name" />
+        <label for="product-manufacture-date">Manufacture Date</label>
+        <input id="product-manufacture-date" type="date" required />
+        <button type="submit">Register Product</button>
+      </form>
+      <div id="register-status" class="status-message hidden"></div>
+    </section>
 
-  <hr/>
+    <hr />
 
-  <!-- Step 5: Verification & Delivery/Fraud -->
-  <div class="step hide" id="mainDapp">
-    <h3 style="margin-top:0;font-size:1.08rem;color:#2955ae;font-weight:700;">Verify Product</h3>
-    <div id="qr-reader"></div>
-    <input id="verifyId" placeholder="Enter or scan Product ID"/>
-    <button id="verifyBtn" disabled>Verify</button>
-    <div id="verifyMsg" class="status hide"></div>
-    <div class="flex hide" id="otpActions">
-      <button id="genDelOtpBtn" style="background:#fee073;color:#664800;">Generate Delivery OTP</button>
-      <button id="confDelBtn" style="background:#97efd2;color:#186c49;">Confirm Delivery (Buyer)</button>
-    </div>
-    <button id="fraudBtn" class="hide" style="background:#fbe9e9;color:#8d2529; margin-top:7px;">Report Fraud</button>
-    <textarea id="fraudDetails" class="hide" rows="2" placeholder="Describe fraud/problem"></textarea>
-    <div id="fraudMsg" class="status hide"></div>
-  </div>
-</div>
+    <!-- Product Verification & Actions -->
+    <section id="product-verification-section" class="hidden" aria-live="polite" aria-labelledby="verify-title">
+      <h1 id="verify-title">Verify Product</h1>
+      <div id="qr-reader"></div>
+      <label for="verify-input">Enter or scan Product ID</label>
+      <input id="verify-input" autocomplete="off" placeholder="Product ID" />
+      <button id="verify-btn" disabled>Verify Product</button>
+      <div id="verify-status" class="status-message hidden"></div>
 
-<script>
-// CONTRACT ABI/ADDRESS -------------------------
-const contractABI = [
-  {inputs:[{type:"address",name:"user"},{type:"bytes32",name:"otpHash"}],name:"generateRegistrationOtp",outputs:[],stateMutability:"nonpayable",type:"function"},
-  {inputs:[{type:"string",name:"otp"}],name:"verifyUserOtp",outputs:[],stateMutability:"nonpayable",type:"function"},
-  {inputs:[{type:"string",name:"productId"},{type:"string",name:"productName"},{type:"string",name:"manufacturer"},{type:"uint256",name:"mfgDate"}],name:"registerProduct",outputs:[],stateMutability:"nonpayable",type:"function"},
-  {inputs:[{type:"string",name:"productId"}],name:"verifyProduct",outputs:[
-    {type:"bool",name:"exists"},{type:"string",name:"name"},
-    {type:"string",name:"manufacturer"},{type:"uint256",name:"manufactureDate"},
-    {type:"bool",name:"delivered"},{type:"address",name:"recipient"}],stateMutability:"view",type:"function"},
-  {inputs:[{type:"string",name:"productId"},{type:"address",name:"recipient"},{type:"bytes32",name:"otpHash"}],name:"generateDeliveryOtp",outputs:[],stateMutability:"nonpayable",type:"function"},
-  {inputs:[{type:"string",name:"productId"},{type:"string",name:"otp"}],name:"confirmDelivery",outputs:[],stateMutability:"nonpayable",type:"function"},
-  {inputs:[{type:"string",name:"productId"},{type:"string",name:"details"}],name:"reportFraud",outputs:[],stateMutability:"nonpayable",type:"function"}
-];
-const contractAddress = "YOUR_CONTRACT_ADDRESS"; // <-- UPDATE THIS!
+      <div class="actions-row hidden" id="delivery-actions">
+        <button id="generate-otp-btn">Generate Delivery OTP (Admin)</button>
+        <button id="confirm-otp-btn">Confirm Delivery (Buyer)</button>
+      </div>
 
-let web3, contract, userAccount, otpVerified = false;
+      <div style="margin-top:16px;">
+        <button id="report-fraud-btn" disabled>Report Fraud</button>
+        <label for="fraud-details" style="margin-top: 12px;">Fraud details (optional)</label>
+        <textarea id="fraud-details" rows="3" placeholder="Describe the issue"></textarea>
+        <div id="fraud-status" class="status-message hidden"></div>
+      </div>
+    </section>
 
-// --- Login
-document.getElementById("loginBtn").onclick = function() {
-  if(document.getElementById("loginUser").value === "user"
-     && document.getElementById("loginPwd").value === "password123") {
-    document.getElementById("loginStep").classList.add("hide");
-    document.getElementById("walletStep").classList.remove("hide");
-  } else {
-    let m=document.getElementById("loginMsg"); m.textContent="Invalid username or password."; m.className="status error"; m.classList.remove("hide");
-  }
-};
-// --- Wallet Connect
-document.getElementById("connectBtn").onclick = async () => {
-  if(!window.ethereum) return alert("Please install MetaMask");
-  web3 = new Web3(window.ethereum);
-  try {
-    let a = await ethereum.request({ method: "eth_requestAccounts" });
-    userAccount = a[0];
-    contract = new web3.eth.Contract(contractABI, contractAddress);
-    document.getElementById("walletDisp").textContent = "Connected: "+userAccount.slice(0,6)+"..."+userAccount.slice(-4);
-    document.getElementById("walletStep").classList.add("hide");
-    document.getElementById("otpStep").classList.remove("hide");
-  }catch(e) { alert("Wallet connection denied."); }
-};
-// --- OTP logic
-document.getElementById("userOtp").oninput = function(){
-  document.getElementById("otpBtn").disabled = this.value.trim().length === 0;
-  document.getElementById("otpMsg").classList.add("hide");
-};
-document.getElementById("otpBtn").onclick = async function() {
-  const otp = document.getElementById("userOtp").value.trim();
-  let m = document.getElementById("otpMsg");
-  m.classList.add("hide");
-  try {
-    await contract.methods.verifyUserOtp(otp).send({from:userAccount});
-    document.getElementById("otpStep").classList.add("hide");
-    document.getElementById("regStep").classList.remove("hide");
-    document.getElementById("mainDapp").classList.remove("hide");
-    otpVerified = true;
-    m.textContent="OTP verified!";
-    m.classList.remove("hide"); m.classList.remove("error"); m.classList.add("success");
-  }catch(e){
-    m.textContent = "Invalid OTP, or admin has not generated for you.";
-    m.classList.remove("hide","success"); m.classList.add("error");
-  }
-};
-// --- Register Product
-document.getElementById("registerForm").onsubmit = async function(e){
-  e.preventDefault();
-  if(!otpVerified) return alert("Complete OTP verification first.");
-  const pid=document.getElementById("pid").value.trim();
-  const pname=document.getElementById("pname").value.trim();
-  const manuf=document.getElementById("manuf").value.trim();
-  const mfgdate=Math.floor(new Date(document.getElementById("mfgdate").value).getTime()/1000);
-  let regMsg = document.getElementById("regMsg");
-  try{
-    await contract.methods.registerProduct(pid,pname,manuf,mfgdate).send({from:userAccount});
-    regMsg.textContent="Product registered!";
-    regMsg.classList.remove("hide","error"); regMsg.classList.add("success");
-    this.reset();
-  }catch(e){
-    regMsg.textContent="Registration failed (are you verified & contract owner?).";
-    regMsg.classList.remove("hide","success"); regMsg.classList.add("error");
-  }
-};
-// --- Product Verification and Delivery/Fraud
-Html5Qrcode.getCameras().then(devs=>{
-  if(devs&&devs.length){
-    let qr=new Html5Qrcode("qr-reader");
-    qr.start({deviceId:{exact:devs[0].id}}, {fps:10,qrbox:220}, decoded=>{
-      document.getElementById("verifyId").value=decoded;
-      document.getElementById("verifyBtn").disabled=false;
-    },err=>{});
-  }
-});
-document.getElementById("verifyId").oninput=function() {
-  document.getElementById("verifyBtn").disabled = this.value.trim()==="";
-};
-document.getElementById("verifyBtn").onclick = async function() {
-  let pid=document.getElementById("verifyId").value.trim();
-  let msg=document.getElementById("verifyMsg");
-  try{
-    let r=await contract.methods.verifyProduct(pid).call();
-    if(r.exists){
-      let dt=new Date(r.manufactureDate*1000);
-      let status=r.delivered?"✅ Delivered":"⏳ Not Delivered";
-      msg.innerHTML=`✅ <b>Product Found</b><br>Name:<b>${r.name}</b><br>Manufacturer:<b>${r.manufacturer}</b><br>Manufacture Date:<b>${dt.toLocaleDateString()}</b><br>Status:<b>${status}</b>`;
-      msg.classList.remove("hide","error"); msg.classList.add("success");
-      document.getElementById("otpActions").classList.remove("hide");
-      document.getElementById("fraudBtn").classList.remove("hide");
-      document.getElementById("fraudDetails").classList.remove("hide");
-    }else{
-      msg.textContent="Product not found.";
-      msg.classList.remove("hide","success"); msg.classList.add("error");
-    }
-  }catch(e){
-    msg.textContent="Error verifying.";
-    msg.classList.remove("hide","success"); msg.classList.add("error");
-  }
-};
-// --- Delivery OTP generation (Admin)
-document.getElementById("genDelOtpBtn").onclick = async function() {
-  let pid=document.getElementById("verifyId").value.trim();
-  let recipient=prompt("Enter recipient wallet address:");
-  if(!recipient) return;
-  let otp=String(Math.floor(Math.random()*900000+100000));
-  let otpHash=web3.utils.keccak256(otp);
-  try{
-    await contract.methods.generateDeliveryOtp(pid,recipient,otpHash).send({from:userAccount});
-    alert(`OTP for delivery: ${otp}\nShare with recipient only.`);
-  }catch(e){ alert("Failed. Only contract owner can assign OTP."); }
-};
-// --- Confirm Delivery (Buyer)
-document.getElementById("confDelBtn").onclick = async function() {
-  let pid=document.getElementById("verifyId").value.trim();
-  let otp=prompt("Enter delivery OTP:");
-  if(!otp) return;
-  try{
-    await contract.methods.confirmDelivery(pid,otp).send({from:userAccount});
-    alert("Delivery confirmed!");
-  }catch(e){ alert("Failed: Invalid OTP, not recipient, or already confirmed."); }
-};
-// --- Fraud Reporting
-document.getElementById("fraudBtn").onclick = async function() {
-  let pid=document.getElementById("verifyId").value.trim();
-  let details=document.getElementById("fraudDetails").value.trim();
-  let msg=document.getElementById("fraudMsg");
-  if(!pid||!details){msg.textContent="Product ID & details required.";msg.classList.remove("hide","success");msg.classList.add("error");msg.style.display="block";return;}
-  try{
-    await contract.methods.reportFraud(pid,details).send({from:userAccount});
-    msg.textContent="Fraud reported!";
-    msg.classList.remove("hide","error");msg.classList.add("success");
-  }catch(e){
-    msg.textContent="Failed to report fraud.";
-    msg.classList.remove("hide","success");msg.classList.add("error");
-  }
-};
-</script>
+  </main>
+
+  <script>
+    (async function(){
+      // Contract setup
+      const contractABI = [...]; // Paste ABI here (use from above)
+      const contractAddress = "YOUR_CONTRACT_ADDRESS";
+
+      // DOM Elements
+      const loginSection = document.getElementById('login-section');
+      const loginUser = document.getElementById('login-username');
+      const loginPassword = document.getElementById('login-password');
+      const loginBtn = document.getElementById('login-btn');
+      const loginMessage = document.getElementById('login-message');
+
+      const walletSection = document.getElementById('wallet-section');
+      const walletBtn = document.getElementById('wallet-connect-btn');
+      const walletAddress = document.getElementById('wallet-address');
+      const walletMessage = document.getElementById('wallet-message');
+
+      const otpSection = document.getElementById('otp-section');
+      const otpInput = document.getElementById('otp-input');
+      const otpVerifyBtn = document.getElementById('otp-verify-btn');
+      const otpMessage = document.getElementById('otp-message');
+
+      const registrationSection = document.getElementById('registration-section');
+      const registerForm = document.getElementById('register-form');
+      const registerStatus = document.getElementById('register-status');
+
+      const productVerificationSection = document.getElementById('product-verification-section');
+      const qrReaderDiv = document.getElementById('qr-reader');
+      const verifyInput = document.getElementById('verify-input');
+      const verifyBtn = document.getElementById('verify-btn');
+      const verifyStatus = document.getElementById('verify-status');
+
+      const deliveryActions = document.getElementById('delivery-actions');
+      const generateOtpBtn = document.getElementById('generate-otp-btn');
+      const confirmOtpBtn = document.getElementById('confirm-otp-btn');
+
+      const reportFraudBtn = document.getElementById('report-fraud-btn');
+      const fraudDetails = document.getElementById('fraud-details');
+      const fraudStatus = document.getElementById('fraud-status');
+
+      // State variables
+      let web3, contract, userAccount;
+      let otpVerified = false;
+
+      // LOGIN HANDLER
+      loginBtn.onclick = () => {
+        if(loginUser.value === 'user' && loginPassword.value === 'password123') {
+          loginSection.style.display = 'none';
+          walletSection.style.display = 'block';
+          loginMessage.style.display = 'none';
+        } else {
+          loginMessage.textContent = 'Invalid username or password.';
+          loginMessage.style.display = 'block';
+        }
+      };
+
+      // WALLET CONNECT
+      walletBtn.onclick = async () => {
+        if(!window.ethereum) {
+          alert('Please install MetaMask!');
+          return;
+        }
+        try {
+          web3 = new Web3(window.ethereum);
+          const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+          userAccount = accounts[0];
+          walletAddress.textContent = userAccount;
+          contract = new web3.eth.Contract(contractABI, contractAddress);
+          walletSection.style.display = 'none';
+          otpSection.style.display = 'block';
+          otpVerifyBtn.disabled = true;
+        } catch(e) {
+          walletMessage.textContent = 'Wallet connection denied.';
+          walletMessage.style.display = 'block';
+        }
+      };
+
+      // OTP VERIFY BUTTON ENABLE/DISABLE
+      otpInput.oninput = () => {
+        otpVerifyBtn.disabled = otpInput.value.trim() === '';
+        otpMessage.style.display = 'none';
+      };
+
+      // OTP VERIFY
+      otpVerifyBtn.onclick = async () => {
+        try {
+          otpMessage.style.display = 'block';
+          otpMessage.textContent = 'Verifying OTP…';
+          otpMessage.className = '';
+          await contract.methods.verifyUser(otpInput.value.trim()).send({from: userAccount});
+          otpMessage.textContent = 'OTP verified successfully!';
+          otpMessage.className = 'status-message status-success';
+          otpSection.style.display = 'none';
+          registrationSection.style.display = 'block';
+          productVerificationSection.style.display = 'block';
+          otpVerified = true;
+          verifyBtn.disabled = true;
+          generateOtpBtn.disabled = true;
+          confirmOtpBtn.disabled = true;
+          reportFraudBtn.disabled = true;
+        } catch {
+          otpMessage.textContent = 'Invalid OTP or not issued.';
+          otpMessage.className = 'status-message status-error';
+        }
+      };
+
+      // REGISTER PRODUCT
+      registerForm.onsubmit = async (e) => {
+        e.preventDefault();
+        if(!otpVerified) {
+          alert('Complete OTP verification first');
+          return;
+        }
+        const productId = document.getElementById('product-id').value.trim();
+        const productName = document.getElementById('product-name').value.trim();
+        const manufacturer = document.getElementById('product-manufacturer').value.trim();
+        const manufactureDateRaw = document.getElementById('product-manufacture-date').value;
+
+        if(!productId || !productName || !manufacturer || !manufactureDateRaw) {
+          alert('Fill all product details');
+          return;
+        }
+
+        const manufactureDate = Math.floor(new Date(manufactureDateRaw).getTime() / 1000);
+
+        registerStatus.style.display = 'block';
+        registerStatus.textContent = 'Registering product...';
+        registerStatus.className = '';
+
+        try {
+          await contract.methods.registerProduct(productId, productName, manufacturer, manufactureDate).send({ from: userAccount });
+          registerStatus.textContent = 'Product registered successfully!';
+          registerStatus.className = 'status-message status-success';
+          registerForm.reset();
+        } catch {
+          registerStatus.textContent = 'Registration failed. Make sure you are owner and verified.';
+          registerStatus.className = 'status-message status-error';
+        }
+      };
+
+      // SETUP QR CODE SCANNER and MANUAL INPUT handlers
+      verifyInput.oninput = () => {
+        verifyBtn.disabled = verifyInput.value.trim() === '';
+      };
+
+      verifyBtn.onclick = async () => {
+        verifyStatus.style.display = 'block';
+        verifyStatus.textContent = 'Verifying...';
+        verifyStatus.className = '';
+
+        const id = verifyInput.value.trim();
+
+        try {
+          const res = await contract.methods.verifyProduct(id).call();
+          if(res.exists) {
+            let dt = new Date(res.manufactureDate * 1000);
+            let delStatus = res.delivered ? '✅ Delivered' : '❌ Not Delivered';
+            verifyStatus.innerHTML = `<strong>Product Found:</strong><br>
+                                      Name: ${res.productName}<br>
+                                      Manufacturer: ${res.manufacturer}<br>
+                                      Manufacture Date: ${dt.toLocaleDateString()}<br>
+                                      Delivery Status: ${delStatus}`;
+            verifyStatus.className = 'status-message status-success';
+            generateOtpBtn.disabled = false;
+            confirmOtpBtn.disabled = false;
+            reportFraudBtn.disabled = false;
+          } else {
+            verifyStatus.textContent = 'Product not found or unregistered.';
+            verifyStatus.className = 'status-message status-error';
+            generateOtpBtn.disabled = true;
+            confirmOtpBtn.disabled = true;
+            reportFraudBtn.disabled = true;
+          }
+        } catch {
+          verifyStatus.textContent = 'Error verifying product.';
+          verifyStatus.className = 'status-message status-error';
+        }
+      };
+
+      // Initialize QR code scanning
+      try {
+        const cameras = await Html5Qrcode.getCameras();
+        if(cameras && cameras.length) {
+          const qrScanner = new Html5Qrcode('qr-reader');
+          qrScanner.start(
+            { deviceId: { exact: cameras[0].id } },
+            { fps: 10, qrbox: 250 },
+            (decoded) => {
+              verifyInput.value = decoded;
+              verifyBtn.disabled = false;
+            },
+            (error) => {
+              // ignore errors for smooth scanning
+            }
+          );
+        }
+      } catch {
+        // No camera available or permissions denied
+      }
+
+      // Admin generates delivery OTP & reveals to admin
+      generateOtpBtn.onclick = async () => {
+        const id = verifyInput.value.trim();
+        const recipient = prompt('Enter recipient wallet address:');
+        if (!recipient) return;
+      
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const otpHash = web3.utils.keccak256(otp);
+      
+        try {
+          await contract.methods.generateDeliveryOtp(id, recipient, otpHash).send({ from: userAccount });
+          alert(`Give this OTP to the recipient:\n${otp}`);
+        } catch {
+          alert("Failed. Only contract owner can generate OTP.");
+        }
+      };
+
+      // Buyer confirms delivery OTP
+      confirmOtpBtn.onclick = async () => {
+        const id = verifyInput.value.trim();
+        const otp = prompt('Enter delivery OTP:');
+        if (!otp) return;
+
+        try {
+          await contract.methods.confirmDelivery(id, otp).send({ from: userAccount });
+          alert('Delivery confirmed successfully!');
+        } catch {
+          alert('Invalid OTP or user is not authorized to confirm.');
+        }
+      };
+
+      // Fraud reporting
+      reportFraudBtn.onclick = async () => {
+        const id = verifyInput.value.trim();
+        const details = fraudDetails.value.trim();
+
+        if (!id || !details) {
+          fraudStatus.textContent = 'Please provide product ID and fraud description.';
+          fraudStatus.className = 'status-message status-error';
+          fraudStatus.style.display = 'block';
+          return;
+        }
+
+        try {
+          await contract.methods.reportFraud(id, details).send({ from: userAccount });
+          fraudStatus.textContent = 'Fraud reported successfully!';
+          fraudStatus.className = 'status-message status-success';
+          fraudStatus.style.display = 'block';
+          fraudDetails.value = '';
+        } catch {
+          fraudStatus.textContent = 'Failed to report fraud.';
+          fraudStatus.className = 'status-message status-error';
+          fraudStatus.style.display = 'block';
+        }
+      };
+    })();
+  </script>
 </body>
 </html>
